@@ -6,15 +6,16 @@ import unicodedata
 from urllib.parse import unquote
 from playwright.async_api import async_playwright
 
-# 📂 Ruta de descarga en Windows (ajusta según necesites)
-DOWNLOAD_PATH = os.path.join(os.environ["USERPROFILE"], "Downloads", "testdescarga")
+# 📂 Carpeta donde se guardarán los archivos
+BASE_DIR = r"C:\Users\Oscar Centeno\Desktop\Oscar\CGR\2025\SIGEDAPP"
+DOWNLOAD_PATH = os.path.join(BASE_DIR, "Archivos")
 os.makedirs(DOWNLOAD_PATH, exist_ok=True)
 
-# Función para limpiar los nombres de archivo
+# Función para limpiar nombres de archivo
 def sanitize_filename(filename):
     filename = unquote(filename)  # Decodificar caracteres URL
-    filename = unicodedata.normalize("NFKD", filename).encode("ASCII", "ignore").decode("ASCII")  # Eliminar acentos
-    filename = re.sub(r'[<>:"/\\|?*]', "", filename)  # Caracteres no permitidos en Windows
+    filename = unicodedata.normalize("NFKD", filename).encode("ASCII", "ignore").decode("ASCII")  # Remover acentos
+    filename = re.sub(r'[<>:"/\\|?*]', "", filename)  # Eliminar caracteres no permitidos en Windows
     return filename.strip()
 
 # Extraer el nombre del archivo desde los headers del servidor
@@ -33,7 +34,8 @@ async def main():
         page = await context.new_page()
 
         print("🔄 Cargando la página principal...")
-        await page.goto("https://cgrweb.cgr.go.cr/apex/f?p=CORRESPONDENCIA:1:::::P1_CONSECUTIVO:A88C108C63FD77A3C0E96E1EE8FC6802", timeout=90000)
+        url = "https://cgrweb.cgr.go.cr/apex/f?p=CORRESPONDENCIA:1:::::P1_CONSECUTIVO:A88C108C63FD77A3C0E96E1EE8FC6802"
+        await page.goto(url, timeout=90000)
         print("✅ Página cargada con éxito")
 
         # Obtener todos los enlaces de documentos
@@ -73,10 +75,10 @@ async def main():
                 if not file_name:
                     file_name = f"Documento_{index+1}.pdf"  # Fallback si no se encuentra el nombre real
 
-                # Guardar el archivo en la carpeta de descargas de Windows
+                # Guardar el archivo en la carpeta de descargas especificada
                 file_path = os.path.join(DOWNLOAD_PATH, file_name)
                 with open(file_path, "wb") as f:
-                    f.write(file_content)
+                    f.write(await file_response.body())
                 
                 print(f"✅ Documento {index+1} descargado como: {file_name}")
 
