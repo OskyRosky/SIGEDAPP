@@ -2,44 +2,73 @@
 # SIGED con R   #
 ################
 
+library(RSelenium)
+library(tidyverse)
 
-library(rvest)
-library(httr)
-
-# 📂 Directorio de descarga
+# 📂 Directorio donde se guardarán los archivos
 download_dir <- "C:/Users/Oscar Centeno/Desktop/Oscar/CGR/2025/SIGEDAPP/Archivos"
-dir.create(download_dir, showWarnings = FALSE, recursive = TRUE)
 
 # URL base
 base_url <- "https://cgrweb.cgr.go.cr/apex/f?p=CORRESPONDENCIA:1:::::P1_CONSECUTIVO:A88C108C63FD77A3C0E96E1EE8FC6802"
 
-# Leer la página
-cat("🔄 Cargando la página...\n")
-page <- read_html(base_url)
+# Iniciar Selenium (asegúrate de que Chrome y ChromeDriver estén instalados)
+rD <- rsDriver(browser = "chrome", chromever = "latest", port = 4567L, verbose = FALSE)
+remDr <- rD$client
 
-# Extraer todos los enlaces
-links <- page %>% html_nodes("a") %>% html_attr("href")
+# Abrir la página
+remDr$navigate(base_url)
+Sys.sleep(5)  # Espera que la página cargue
 
-# Filtrar los enlaces de descarga
-download_links <- links[grepl("apex.navigation.dialog", links)]
+# Obtener todos los enlaces de descarga
+links <- remDr$findElements(using = "css selector", "a")
+
+# Filtrar solo los que contienen 'apex.navigation.dialog'
+download_links <- links %>% keep(function(link) {
+  href <- link$getElementAttribute("href")[[1]]
+  !is.null(href) && grepl("apex.navigation.dialog", href)
+})
+
+# Contar archivos a descargar
 num_files <- length(download_links)
-
 cat("🔗 Se encontraron", num_files, "archivos para descargar...\n")
 
-# Descargar los archivos
+# Descargar archivos
 for (i in seq_along(download_links)) {
-  file_url <- paste0("https://cgrweb.cgr.go.cr", download_links[i]) # Convertir a URL completa
-  file_name <- paste0("Archivo_", i, ".pdf")
-  file_path <- file.path(download_dir, file_name)
+  cat("📂 Descargando archivo", i, "...\n")
   
-  cat("📂 Descargando archivo:", file_name, "\n")
+  # Abrir el enlace en una nueva pestaña
+  download_links[[i]]$clickElement()
+  Sys.sleep(3)  # Esperar que la nueva ventana cargue
   
-  tryCatch({
-    GET(file_url, write_disk(file_path, overwrite = TRUE))
-    cat("✅ Descargado:", file_name, "\n")
-  }, error = function(e) {
-    cat("❌ Error al descargar:", file_name, "\n")
-  })
+  # Cambiar a la nueva pestaña
+  windows <- remDr$getWindowHandles()
+  remDr$switchToWindow(windows[[2]])
+  
+  # Buscar el elemento <embed> con la URL del archivo
+  embed_element <- tryCatch({
+    remDr$findElement(using = "css selector", "embed")
+  }, error = function(e) NULL)
+  
+  if (!is.null(embed_element)) {
+    file_url <- embed_element$getElementAttribute("src")[[1]]
+    full_url <- ifelse(startsWith(file_url, "http"), file_url, paste0("https://cgrweb.cgr.go.cr", file_url))
+    
+    cat("📄 Archivo encontrado:", full_url, "\n")
+    
+    # Descargar el archivo manualmente
+    download.file(full_url, destfile = file.path(download_dir, paste0("Archivo_", i, ".pdf")), mode = "wb")
+    cat("✅ Archivo", i, "descargado con éxito\n")
+  } else {
+    cat("❌ No se encontró documento en el archivo", i, "\n")
+  }
+  
+  # Cerrar la pestaña y volver a la original
+  remDr$closeWindow()
+  remDr$switchToWindow(windows[[1]])
 }
 
-cat("👋 Descargas completadas.\n")
+# Cerrar Selenium
+remDr$close()
+rD$server$stop()
+cat("👋 Proceso completado.\n")
+
