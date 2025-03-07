@@ -2,8 +2,36 @@
 # SIGED con R   #
 ################
 
+# Instalar paquetes si no los tienes
+install.packages("RSelenium")
+install.packages("wdman")
+install.packages("tidyverse")
+
+# Cargar paquetes
 library(RSelenium)
 library(tidyverse)
+
+# Verificar versión de Chrome instalada
+shell("chrome --version", intern = TRUE)
+
+# Obtener la versión exacta de ChromeDriver compatible
+chromever <- system("wmic datafile where name='C:\\\\Program Files (x86)\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe' get Version /value", intern = TRUE)
+chromever <- gsub("Version=", "", chromever)
+chromever <- trimws(chromever)
+
+# Iniciar el servidor Selenium manualmente
+rD <- rsDriver(browser = "chrome", chromever = chromever, verbose = FALSE, port = 4444L)
+
+# Crear cliente de Selenium
+remDr <- rD$client
+
+# Si funciona sin errores, entonces tu Selenium está listo
+
+
+##################################################
+
+
+
 
 # 📂 Directorio donde se guardarán los archivos
 download_dir <- "C:/Users/Oscar Centeno/Desktop/Oscar/CGR/2025/SIGEDAPP/Archivos"
