@@ -50,6 +50,10 @@ for (i in seq_along(download_links)) {
     remDr$findElement(using = "css selector", "embed")
   }, error = function(e) NULL)
   
+  
+  
+  
+  
   if (!is.null(embed_element)) {
     file_url <- embed_element$getElementAttribute("src")[[1]]
     full_url <- ifelse(startsWith(file_url, "http"), file_url, paste0(base_url, file_url))
