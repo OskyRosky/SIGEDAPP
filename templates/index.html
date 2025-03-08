@@ -3,24 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIGED - Descarga Automática</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Descarga de SIGED</title>
+    <script>
+        async function iniciarDescarga() {
+            const url = document.getElementById("url").value;
+            const downloadPath = document.getElementById("downloadPath").value;
+
+            if (!url || !downloadPath) {
+                alert("Debe ingresar una URL y seleccionar la carpeta de descarga.");
+                return;
+            }
+
+            const response = await fetch("/download", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url, download_path: downloadPath })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+        }
+    </script>
 </head>
 <body>
-    <div class="container">
-        <h1>📂 Descarga de Archivos SIGED</h1>
-        <label for="url">Ingrese la URL de descarga:</label>
-        <input type="text" id="url" placeholder="https://cgrweb.cgr.go.cr/apex/...">
-        <button onclick="startDownload()">📥 Descargar</button>
-        
-        <div id="progress-container">
-            <progress id="progress-bar" value="0" max="100"></progress>
-            <p id="progress-text">Esperando descarga...</p>
-        </div>
-
-        <p id="status"></p>
-    </div>
-
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <h1>Bienvenido al recurso de descarga del SIGED</h1>
+    <label for="url">Ingrese el enlace:</label>
+    <input type="text" id="url" placeholder="Pegue el enlace aquí">
+    <br><br>
+    <label for="downloadPath">Seleccione la carpeta de descarga:</label>
+    <input type="text" id="downloadPath" placeholder="Ej: C:\Descargas">
+    <br><br>
+    <button onclick="iniciarDescarga()">Descargar archivos</button>
 </body>
 </html>
