@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGED - Descarga Automática</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>📂 Descarga de Archivos SIGED</h1>
+        <label for="url">Ingrese la URL de descarga:</label>
+        <input type="text" id="url" placeholder="https://cgrweb.cgr.go.cr/apex/...">
+        <button onclick="startDownload()">📥 Descargar</button>
+        
+        <div id="progress-container">
+            <progress id="progress-bar" value="0" max="100"></progress>
+            <p id="progress-text">Esperando descarga...</p>
+        </div>
+
+        <p id="status"></p>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
