@@ -3,36 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Descarga de SIGED</title>
+    <title>Descarga SIGED</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        input {
+            width: 60%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            color: blue;
+        }
+    </style>
     <script>
         async function iniciarDescarga() {
             const url = document.getElementById("url").value;
-            const downloadPath = document.getElementById("downloadPath").value;
 
-            if (!url || !downloadPath) {
-                alert("Debe ingresar una URL y seleccionar la carpeta de descarga.");
+            if (!url) {
+                alert("Debe ingresar una URL válida.");
                 return;
             }
+
+            document.getElementById("status").innerText = "⏳ Descargando archivos...";
 
             const response = await fetch("/download", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url, download_path: downloadPath })
+                body: JSON.stringify({ url })
             });
 
             const result = await response.json();
-            alert(result.message);
+            document.getElementById("status").innerText = result.message;
         }
     </script>
 </head>
 <body>
-    <h1>Bienvenido al recurso de descarga del SIGED</h1>
-    <label for="url">Ingrese el enlace:</label>
+    <h1>Descarga Automática de Archivos SIGED</h1>
+    <p>Ingrese la URL del SIGED para descargar los archivos:</p>
     <input type="text" id="url" placeholder="Pegue el enlace aquí">
-    <br><br>
-    <label for="downloadPath">Seleccione la carpeta de descarga:</label>
-    <input type="text" id="downloadPath" placeholder="Ej: C:\Descargas">
-    <br><br>
+    <br>
     <button onclick="iniciarDescarga()">Descargar archivos</button>
+    <p id="status"></p>
 </body>
 </html>
+

@@ -11,7 +11,12 @@ import threading
 
 app = Flask(__name__)
 
-# Función para limpiar nombres de archivos
+# 📂 Carpeta donde se guardarán los archivos automáticamente
+BASE_DIR = r"C:\Users\Oscar Centeno\Desktop\Oscar\CGR\2025\SIGEDAPP"
+DOWNLOAD_PATH = os.path.join(BASE_DIR, "Archivos")
+os.makedirs(DOWNLOAD_PATH, exist_ok=True)
+
+# Función para limpiar nombres de archivo
 def sanitize_filename(filename):
     filename = unquote(filename)
     filename = unicodedata.normalize("NFKD", filename).encode("ASCII", "ignore").decode("ASCII")
@@ -27,7 +32,7 @@ async def get_filename_from_headers(response):
     return None
 
 # Función para descargar archivos
-async def download_files(url, download_path):
+async def download_files(url):
     print("🚀 Iniciando Playwright...")
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -49,7 +54,7 @@ async def download_files(url, download_path):
 
         print(f"🔗 Se encontraron {len(download_links)} documentos para descargar.")
 
-        base_url = "https://cgrweb.cgr.go.cr/apex/"  # Dominio base
+        base_url = "https://cgrweb.cgr.go.cr/apex/"
         for index, link in enumerate(download_links):
             print(f"📂 Abriendo documento {index + 1}...")
 
@@ -68,7 +73,7 @@ async def download_files(url, download_path):
                 # Descargar el archivo
                 file_response = await new_page.request.get(full_url)
                 file_name = await get_filename_from_headers(file_response) or f"Documento_{index+1}.pdf"
-                file_path = os.path.join(download_path, file_name)
+                file_path = os.path.join(DOWNLOAD_PATH, file_name)
 
                 with open(file_path, "wb") as f:
                     f.write(await file_response.body())
@@ -94,16 +99,15 @@ def index():
 def start_download():
     data = request.json
     url = data.get("url")
-    download_path = data.get("download_path")
 
-    if not url or not download_path:
-        return jsonify({"error": "Debe ingresar una URL y una carpeta de destino."}), 400
+    if not url:
+        return jsonify({"error": "Debe ingresar una URL válida."}), 400
 
     # Ejecutar la descarga en un hilo separado
-    thread = threading.Thread(target=lambda: asyncio.run(download_files(url, download_path)))
+    thread = threading.Thread(target=lambda: asyncio.run(download_files(url)))
     thread.start()
 
-    return jsonify({"message": "Descarga en proceso"}), 200
+    return jsonify({"message": "Descarga en proceso. Los archivos se guardarán en la carpeta predeterminada."}), 200
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)
